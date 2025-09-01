@@ -3,7 +3,6 @@ using namespace std;
 
 /* ========================
    🔹 DISJOINT SET UNION (Union-Find)
-   - Connected components, cycle detection, MST (Kruskal)
    ======================== */
 struct DSU {
     vector<int> parent, sz;
@@ -25,8 +24,7 @@ struct DSU {
 };
 
 /* ========================
-   🔹 TARJAN'S Algorithm
-   - Bridges & Articulation Points
+   🔹 TARJAN’S Bridges + Articulation
    ======================== */
 void tarjanDFS(int u,int p,vector<int>&disc,vector<int>&low,
                vector<vector<int>>&g,vector<pair<int,int>>&bridges,
@@ -47,7 +45,7 @@ void tarjanDFS(int u,int p,vector<int>&disc,vector<int>&low,
 }
 
 /* ========================
-   🔹 TARJAN'S SCC (Kosaraju alternative)
+   🔹 TARJAN’S SCC
    ======================== */
 void sccDFS(int u,vector<int>&disc,vector<int>&low,stack<int>&st,vector<int>&inStack,
             vector<vector<int>>&g,vector<vector<int>>&sccs,int &time){
@@ -103,6 +101,36 @@ int primMST(int n, vector<vector<pair<int,int>>>&g){
     return cost;
 }
 
+/* ========================
+   🔹 BORŮVKA’S MST
+   ======================== */
+int boruvkaMST(int n, vector<tuple<int,int,int>>&edges){
+    DSU dsu(n);
+    int numComp=n, mstCost=0;
+    while(numComp>1){
+        vector<int> best(n,-1);
+        // Pick cheapest edge for each component
+        for(int i=0;i<edges.size();i++){
+            auto [w,u,v]=edges[i];
+            int pu=dsu.find(u), pv=dsu.find(v);
+            if(pu==pv) continue;
+            if(best[pu]==-1 || get<0>(edges[best[pu]])>w) best[pu]=i;
+            if(best[pv]==-1 || get<0>(edges[best[pv]])>w) best[pv]=i;
+        }
+        // Add chosen edges
+        for(int i=0;i<n;i++){
+            if(best[i]!=-1){
+                auto [w,u,v]=edges[best[i]];
+                if(dsu.unite(u,v)){
+                    mstCost+=w;
+                    numComp--;
+                }
+            }
+        }
+    }
+    return mstCost;
+}
+
 int main(){
     int n=5;
     vector<tuple<int,int,int>> edges={{1,0,1},{2,0,2},{3,1,2},{4,1,3},{5,2,4}};
@@ -115,6 +143,8 @@ int main(){
     g[3]={{1,4}};
     g[4]={{2,5}};
     cout<<"Prim MST cost: "<<primMST(n,g)<<"\n";
+
+    cout<<"Boruvka MST cost: "<<boruvkaMST(n,edges)<<"\n";
 
     // Tarjan Bridges + Articulation
     vector<vector<int>> g2={{1,2},{0,2},{0,1,3,4},{2,4},{2,3}};
